@@ -206,9 +206,7 @@ impl Voc {
         }
         store
     }
-    fn insert(list: &mut Vec<String>, word: String) {
-        list.push(word);
-    }
+
     fn process_next_level(store: &mut HashMap<usize, Vec<String>>) {
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
@@ -221,29 +219,29 @@ impl Voc {
 
         for word in list {
             match word.len() {
-                3 => Voc::insert(store.get_mut(&3).unwrap(), word),
-                4 => Voc::insert(store.get_mut(&4).unwrap(), word),
-                5 => Voc::insert(store.get_mut(&5).unwrap(), word),
-                6 => Voc::insert(store.get_mut(&6).unwrap(), word),
-                7 => Voc::insert(store.get_mut(&7).unwrap(), word),
-                8 => Voc::insert(store.get_mut(&8).unwrap(), word),
-                9 => Voc::insert(store.get_mut(&9).unwrap(), word),
-                10 => Voc::insert(store.get_mut(&10).unwrap(), word),
-                11 => Voc::insert(store.get_mut(&11).unwrap(), word),
-                12 => Voc::insert(store.get_mut(&12).unwrap(), word),
-                13 => Voc::insert(store.get_mut(&13).unwrap(), word),
-                14 => Voc::insert(store.get_mut(&14).unwrap(), word),
-                15 => Voc::insert(store.get_mut(&15).unwrap(), word),
-                16 => Voc::insert(store.get_mut(&16).unwrap(), word),
-                17 => Voc::insert(store.get_mut(&17).unwrap(), word),
-                18 => Voc::insert(store.get_mut(&18).unwrap(), word),
-                19 => Voc::insert(store.get_mut(&19).unwrap(), word),
-                20 => Voc::insert(store.get_mut(&20).unwrap(), word),
-                21 => Voc::insert(store.get_mut(&21).unwrap(), word),
-                22 => Voc::insert(store.get_mut(&22).unwrap(), word),
-                23 => Voc::insert(store.get_mut(&23).unwrap(), word),
-                24 => Voc::insert(store.get_mut(&24).unwrap(), word),
-                25 => Voc::insert(store.get_mut(&25).unwrap(), word),
+                3 => store.get_mut(&3).unwrap().push(word),
+                4 => store.get_mut(&4).unwrap().push(word),
+                5 => store.get_mut(&5).unwrap().push(word),
+                6 => store.get_mut(&6).unwrap().push(word),
+                7 => store.get_mut(&7).unwrap().push(word),
+                8 => store.get_mut(&8).unwrap().push(word),
+                9 => store.get_mut(&9).unwrap().push(word),
+                10 => store.get_mut(&10).unwrap().push(word),
+                11 => store.get_mut(&11).unwrap().push(word),
+                12 => store.get_mut(&12).unwrap().push(word),
+                13 => store.get_mut(&13).unwrap().push(word),
+                14 => store.get_mut(&14).unwrap().push(word),
+                15 => store.get_mut(&15).unwrap().push(word),
+                16 => store.get_mut(&16).unwrap().push(word),
+                17 => store.get_mut(&17).unwrap().push(word),
+                18 => store.get_mut(&18).unwrap().push(word),
+                19 => store.get_mut(&19).unwrap().push(word),
+                20 => store.get_mut(&20).unwrap().push(word),
+                21 => store.get_mut(&21).unwrap().push(word),
+                22 => store.get_mut(&22).unwrap().push(word),
+                23 => store.get_mut(&23).unwrap().push(word),
+                24 => store.get_mut(&24).unwrap().push(word),
+                25 => store.get_mut(&25).unwrap().push(word),
                 _ => panic!("wrong length invalid data should't be at this point"),
             }
         }
