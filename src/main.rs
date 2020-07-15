@@ -165,7 +165,9 @@ impl Voc {
         } else {
             name.to_owned()
         };
-        fs::write(path, format!("{}\n", list.join("\n"))).unwrap();
+        if list.len() > 0 {
+            fs::write(path, format!("{}\n", list.join("\n"))).unwrap();
+        }
     }
     fn end(list: Vec<String>) {
         let size = list.len();
@@ -210,9 +212,7 @@ impl Voc {
     fn process_next_level(store: &mut HashMap<usize, Vec<String>>) {
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
-            if list.len() > 0 {
-                Voc::write(&format!("A-{}", rank), list.clone())
-            }
+            Voc::write(&format!("A-{}", rank), list.clone())
         }
     }
     fn next_level(list: Vec<String>) {
@@ -257,9 +257,10 @@ fn main() {
             fs::File::create(name).unwrap();
         }
     }
-    if !std::path::Path::new("parts").is_dir() {
-        fs::create_dir("parts").unwrap()
+    if std::path::Path::new("parts").is_dir() {
+        fs::remove_dir_all("parts").unwrap();
     }
+    fs::create_dir("parts").unwrap();
     Voc::start(&mut Forbid::start());
 }
 
