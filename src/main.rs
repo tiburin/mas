@@ -1,13 +1,12 @@
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
-
 const OFF: &str = "word.off";
 const ON: &str = "word.on";
-const PLURAL: &str = "plural.on";
-const SIMPLE: &str = "simple.on";
-const ED: &str = "ed.on";
-const ING: &str = "ing.on";
-const MATCH: &str = "ion";
+const PLURAL: &str = "Q.on";
+const ED: &str = "P.on";
+const ING: &str = "N.on";
+const MATCH: &str = "";
 const MATCHEND: bool = true;
 type Tipo = HashSet<String>;
 
@@ -189,13 +188,66 @@ impl Voc {
             }
         }
 
-        Voc::write(SIMPLE, simple);
         Voc::write(PLURAL, plural);
         Voc::write(ED, ed);
         Voc::write(ING, ing);
         Voc::write(ON, list);
         Voc::write("match.on", matching);
+        Voc::next_level(simple);
         eprintln!("TOTAL: {}", size);
+    }
+    fn init_sort(store: &mut HashMap<usize, Vec<String>>) -> &mut HashMap<usize, Vec<String>> {
+        let mut start = rule::Word::min();
+        while start <= rule::Word::max() {
+            store.insert(start, vec![]);
+            start += 1;
+        }
+        store
+    }
+    fn insert(list: &mut Vec<String>, word: String) {
+        list.push(word);
+    }
+    fn process_next_level(store: &mut HashMap<usize, Vec<String>>) {
+        for rank in store.keys() {
+            let list = store.get(rank).unwrap();
+            if list.len() > 0 {
+                Voc::write(&format!("A-{}", rank), list.clone())
+            }
+        }
+    }
+    fn next_level(list: Vec<String>) {
+        let mut hash = HashMap::new();
+        let store = Voc::init_sort(&mut hash);
+
+        for word in list {
+            match word.len() {
+                3 => Voc::insert(store.get_mut(&3).unwrap(), word),
+                4 => Voc::insert(store.get_mut(&4).unwrap(), word),
+                5 => Voc::insert(store.get_mut(&5).unwrap(), word),
+                6 => Voc::insert(store.get_mut(&6).unwrap(), word),
+                7 => Voc::insert(store.get_mut(&7).unwrap(), word),
+                8 => Voc::insert(store.get_mut(&8).unwrap(), word),
+                9 => Voc::insert(store.get_mut(&9).unwrap(), word),
+                10 => Voc::insert(store.get_mut(&10).unwrap(), word),
+                11 => Voc::insert(store.get_mut(&11).unwrap(), word),
+                12 => Voc::insert(store.get_mut(&12).unwrap(), word),
+                13 => Voc::insert(store.get_mut(&13).unwrap(), word),
+                14 => Voc::insert(store.get_mut(&14).unwrap(), word),
+                15 => Voc::insert(store.get_mut(&15).unwrap(), word),
+                16 => Voc::insert(store.get_mut(&16).unwrap(), word),
+                17 => Voc::insert(store.get_mut(&17).unwrap(), word),
+                18 => Voc::insert(store.get_mut(&18).unwrap(), word),
+                19 => Voc::insert(store.get_mut(&19).unwrap(), word),
+                20 => Voc::insert(store.get_mut(&20).unwrap(), word),
+                21 => Voc::insert(store.get_mut(&21).unwrap(), word),
+                22 => Voc::insert(store.get_mut(&22).unwrap(), word),
+                23 => Voc::insert(store.get_mut(&23).unwrap(), word),
+                24 => Voc::insert(store.get_mut(&24).unwrap(), word),
+                25 => Voc::insert(store.get_mut(&25).unwrap(), word),
+                _ => panic!("wrong length invalid data should't be at this point"),
+            }
+        }
+        Voc::process_next_level(store);
     }
 }
 
