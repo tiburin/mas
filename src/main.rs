@@ -210,7 +210,7 @@ impl Voc {
     fn process_next_level(store: &mut HashMap<usize, Vec<String>>) {
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
-            Voc::write(&format!("A-{}", rank), list.clone())
+            Voc::write(&format!("F-{}.on", rank), list.clone())
         }
     }
     fn next_level(list: Vec<String>) {
