@@ -3,9 +3,6 @@ use std::collections::HashSet;
 use std::fs;
 const OFF: &str = "word.off";
 const ON: &str = "word.on";
-const PLURAL: &str = "Q.on";
-const ED: &str = "P.on";
-const ING: &str = "N.on";
 const MATCH: &str = "";
 const MATCHEND: bool = true;
 type Tipo = HashSet<String>;
@@ -177,25 +174,25 @@ impl Voc {
         let mut simple = vec![];
         let mut matching = vec![];
         for word in list.clone() {
-            if Str::is_ing(&word) {
+            if Str::is_match(&word) {
+                matching.push(word)
+            } else if Str::is_ing(&word) {
                 ing.push(word)
             } else if Str::is_ed(&word) {
                 ed.push(word)
             } else if Str::is_plural(&word) {
                 plural.push(word)
-            } else if Str::is_match(&word) {
-                matching.push(word)
             } else {
                 simple.push(word)
             }
         }
 
-        Voc::write(PLURAL, plural);
-        Voc::write(ED, ed);
-        Voc::write(ING, ing);
         Voc::write(ON, list);
         Voc::write("match.on", matching);
-        Voc::next_level(simple);
+        Voc::next_level(ed, "N");
+        Voc::next_level(ing, "O");
+        Voc::next_level(plural, "P");
+        Voc::next_level(simple, "F");
         eprintln!("TOTAL: {}", size);
     }
     fn init_sort(store: &mut HashMap<usize, Vec<String>>) -> &mut HashMap<usize, Vec<String>> {
@@ -207,13 +204,13 @@ impl Voc {
         store
     }
 
-    fn process_next_level(store: &mut HashMap<usize, Vec<String>>) {
+    fn process_next_level(store: &mut HashMap<usize, Vec<String>>, letter: &str) {
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
-            Voc::write(&format!("F-{}.on", rank), list.clone())
+            Voc::write(&format!("{}-{}.on", letter, rank), list.clone())
         }
     }
-    fn next_level(list: Vec<String>) {
+    fn next_level(list: Vec<String>, letter: &str) {
         let mut hash = HashMap::new();
         let store = Voc::init_sort(&mut hash);
 
@@ -245,7 +242,7 @@ impl Voc {
                 _ => panic!("wrong length invalid data should't be at this point"),
             }
         }
-        Voc::process_next_level(store);
+        Voc::process_next_level(store, letter);
     }
 }
 
