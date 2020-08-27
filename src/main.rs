@@ -53,9 +53,6 @@ impl Str {
         }
         &input[start..input.len()]
     }
-    fn utf_count(input: &str) -> usize {
-        input.chars().fold(0, |acc, letter| acc + letter.len_utf8())
-    }
     fn rm_end(input: &str) -> &str {
         let mut end = Str::utf_count(input);
         let mut list = input.chars();
@@ -79,17 +76,26 @@ impl Str {
                 return false;
             }
         }
-        true
+        input.len() > 0
     }
     pub fn is_ing(input: &str) -> bool {
+        if input.len() <= 3 {
+            return false;
+        }
         let start = input.len() - 3;
         &input[start..input.len()] == "ing"
     }
     pub fn is_ed(input: &str) -> bool {
+        if input.len() <= 2 {
+            return false;
+        }
         let start = input.len() - 2;
         &input[start..input.len()] == "ed"
     }
     pub fn is_plural(input: &str) -> bool {
+        if input.len() <= 2 {
+            return false;
+        }
         let start = input.len() - 1;
         let letter = &input[start..input.len()];
         letter == "s" && &input[start - 1..start] != "s"
@@ -109,6 +115,9 @@ impl Str {
             return None;
         }
         Some(word)
+    }
+    fn utf_count(input: &str) -> usize {
+        input.chars().fold(0, |acc, letter| acc + letter.len_utf8())
     }
 }
 
@@ -195,15 +204,6 @@ impl Voc {
         Voc::next_level(simple, "F");
         eprintln!("TOTAL: {}", size);
     }
-    fn init_sort(store: &mut HashMap<usize, Vec<String>>) -> &mut HashMap<usize, Vec<String>> {
-        let mut start = rule::Word::min();
-        while start <= rule::Word::max() {
-            store.insert(start, vec![]);
-            start += 1;
-        }
-        store
-    }
-
     fn process_next_level(store: &mut HashMap<usize, Vec<String>>, letter: &str) {
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
@@ -211,8 +211,7 @@ impl Voc {
         }
     }
     fn next_level(list: Vec<String>, letter: &str) {
-        let mut hash = HashMap::new();
-        let store = Voc::init_sort(&mut hash);
+        let mut store = Voc::store();
 
         for word in list {
             match word.len() {
@@ -242,7 +241,16 @@ impl Voc {
                 _ => panic!("wrong length invalid data should't be at this point"),
             }
         }
-        Voc::process_next_level(store, letter);
+        Voc::process_next_level(&mut store, letter);
+    }
+    fn store() -> HashMap<usize, Vec<String>> {
+        let mut store = HashMap::new();
+        let mut start = rule::Word::min();
+        while start <= rule::Word::max() {
+            store.insert(start, vec![]);
+            start += 1;
+        }
+        store
     }
 }
 
@@ -261,6 +269,62 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use rule::Word;
     #[test]
-    fn start_test() {}
+    fn store_test() {
+        let store = Voc::store();
+        for rank in Word::min()..Word::max() {
+            assert_eq!(store.get(&rank), Some(&vec![]));
+        }
+    }
+    #[test]
+    fn get_word_test() {
+        let max_letter = "a".repeat(Word::max() + 1);
+        let min_letter = "a".repeat(Word::min() - 1);
+        assert!(Str::get_word(&max_letter).is_none());
+        assert!(Str::get_word(&min_letter).is_none());
+        assert_eq!(Str::get_word("hello"), Some("hello"));
+    }
+    #[test]
+    fn is_plural_test() {
+        assert!(!Str::is_plural("es"));
+        assert!(!Str::is_plural("discuss"));
+        assert!(Str::is_plural("houses"));
+    }
+    #[test]
+    fn is_ed_test() {
+        assert!(Str::is_ed("worked"));
+        assert!(!Str::is_ed("ed"));
+    }
+    #[test]
+    fn is_ing_test() {
+        assert!(Str::is_ing("working"));
+        assert!(!Str::is_ing("worknng"));
+        assert!(!Str::is_ing(""));
+    }
+    #[test]
+    fn valid_english_test() {
+        assert!(Str::valid_english("z"));
+        assert!(Str::valid_english("ab"));
+        assert!(!Str::valid_english(""));
+    }
+    #[test]
+    fn rm_start_end_test() {
+        assert_eq!(Str::rm_start_end("  "), "");
+        assert_eq!(Str::rm_start_end(" hello "), "hello");
+        assert_eq!(Str::rm_start_end("1/#*hello1/#*"), "hello");
+    }
+    #[test]
+    fn rm_start_test() {
+        assert_eq!(Str::rm_start("  "), "");
+        assert_eq!(Str::rm_start(" hello"), "hello");
+        assert_eq!(Str::rm_start("1/#*hello"), "hello");
+    }
+    #[test]
+    fn rm_end_test() {
+        assert_eq!(Str::rm_end("  "), "");
+        assert_eq!(Str::rm_end("hello "), "hello");
+        assert_eq!(Str::rm_end("hello1/#*"), "hello");
+    }
 }
