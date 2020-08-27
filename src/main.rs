@@ -214,31 +214,10 @@ impl Voc {
         let mut store = Voc::store();
 
         for word in list {
-            match word.len() {
-                3 => store.get_mut(&3).unwrap().push(word),
-                4 => store.get_mut(&4).unwrap().push(word),
-                5 => store.get_mut(&5).unwrap().push(word),
-                6 => store.get_mut(&6).unwrap().push(word),
-                7 => store.get_mut(&7).unwrap().push(word),
-                8 => store.get_mut(&8).unwrap().push(word),
-                9 => store.get_mut(&9).unwrap().push(word),
-                10 => store.get_mut(&10).unwrap().push(word),
-                11 => store.get_mut(&11).unwrap().push(word),
-                12 => store.get_mut(&12).unwrap().push(word),
-                13 => store.get_mut(&13).unwrap().push(word),
-                14 => store.get_mut(&14).unwrap().push(word),
-                15 => store.get_mut(&15).unwrap().push(word),
-                16 => store.get_mut(&16).unwrap().push(word),
-                17 => store.get_mut(&17).unwrap().push(word),
-                18 => store.get_mut(&18).unwrap().push(word),
-                19 => store.get_mut(&19).unwrap().push(word),
-                20 => store.get_mut(&20).unwrap().push(word),
-                21 => store.get_mut(&21).unwrap().push(word),
-                22 => store.get_mut(&22).unwrap().push(word),
-                23 => store.get_mut(&23).unwrap().push(word),
-                24 => store.get_mut(&24).unwrap().push(word),
-                25 => store.get_mut(&25).unwrap().push(word),
-                _ => panic!("wrong length invalid data should't be at this point"),
+            if let Some(node) = store.get_mut(&word.len()) {
+                node.push(word);
+            } else {
+                panic!("wrong length invalid data should't be at this point")
             }
         }
         Voc::process_next_level(&mut store, letter);
