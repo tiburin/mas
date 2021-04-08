@@ -126,19 +126,18 @@ impl Parse {
     pub fn lines(input: &str) -> Vec<String> {
         let mut cache: HashSet<String> = HashSet::new();
         let mut list = Vec::new();
-        for lines in input.split("\n") {
-            for word in lines.split_whitespace() {
-                let word = word.trim().to_lowercase();
-                let word = Str::rm_start_end(&word);
-                if let Some(word) = Str::get_word(word) {
-                    let contain = cache.contains(word);
-                    if !contain && Str::valid_english(word) {
-                        list.push(word.to_owned());
-                        cache.insert(word.to_owned());
-                    }
+        for word in input.split_whitespace() {
+            let word = word.trim().to_lowercase();
+            let word = Str::rm_start_end(&word);
+            if let Some(word) = Str::get_word(word) {
+                let contain = cache.contains(word);
+                if !contain && Str::valid_english(word) {
+                    list.push(word.to_owned());
+                    cache.insert(word.to_owned());
                 }
             }
         }
+
         list
     }
 }
@@ -207,19 +206,18 @@ impl Voc {
 
         None
     }
-    fn put(&mut self) -> &mut Self {
+
+    fn compose(&mut self) -> &mut Self {
         self.writer.push(Voc::write(ON, &self.list));
         self.writer.push(Voc::write("match.on", &self.matching));
+
+        self.writer.append(&mut Voc::insert(&self.ed, "N"));
+        self.writer.append(&mut Voc::insert(&self.ing, "O"));
+        self.writer.append(&mut Voc::insert(&self.plural, "P"));
+        self.writer.append(&mut Voc::insert(&self.simple, "F"));
         self
     }
-    fn put_next(&mut self) -> &mut Self {
-        self.writer.append(&mut Voc::next_level(&self.ed, "N"));
-        self.writer.append(&mut Voc::next_level(&self.ing, "O"));
-        self.writer.append(&mut Voc::next_level(&self.plural, "P"));
-        self.writer.append(&mut Voc::next_level(&self.simple, "F"));
-        self
-    }
-    fn end(&mut self) -> &mut Self {
+    fn direct_data(&mut self) -> &mut Self {
         for word in self.list.clone() {
             if Str::is_match(&word) {
                 self.matching.push(word)
@@ -236,10 +234,7 @@ impl Voc {
 
         self
     }
-    fn process_next_level(
-        store: &mut HashMap<usize, Vec<String>>,
-        letter: &str,
-    ) -> Vec<Option<Writer>> {
+    fn collect(store: &mut HashMap<usize, Vec<String>>, letter: &str) -> Vec<Option<Writer>> {
         let mut inner = vec![];
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
@@ -247,7 +242,7 @@ impl Voc {
         }
         inner
     }
-    fn next_level(list: &Vec<String>, letter: &str) -> Vec<Option<Writer>> {
+    fn insert(list: &Vec<String>, letter: &str) -> Vec<Option<Writer>> {
         let mut store = Voc::store();
 
         for word in list {
@@ -257,7 +252,7 @@ impl Voc {
                 panic!("wrong length invalid data should't be at this point")
             }
         }
-        Voc::process_next_level(&mut store, letter)
+        Voc::collect(&mut store, letter)
     }
     fn store() -> HashMap<usize, Vec<String>> {
         let mut store = HashMap::new();
@@ -268,7 +263,7 @@ impl Voc {
         }
         store
     }
-    fn files(&mut self) {
+    fn write_to_files(&mut self) {
         for writer in &self.writer {
             if let Some(write) = writer {
                 fs::write(&write.path, &write.content).unwrap();
@@ -314,7 +309,7 @@ fn main() {
     let on_content = fs::read_to_string(ON).unwrap();
     let off_content = fs::read_to_string(OFF).unwrap();
     let list = App::new(on_content, off_content).forbid().start();
-    Voc::new(list).end().put().put_next().files();
+    Voc::new(list).direct_data().compose().write_to_files();
 }
 
 #[cfg(test)]
