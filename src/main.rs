@@ -153,72 +153,111 @@ impl Forbid {
         store
     }
 }
+#[derive(Debug)]
+struct Writer {
+    path: String,
+    len: usize,
+    content: String,
+}
+impl Writer {
+    fn new(path: String, content: String, len: usize) -> Self {
+        Self { path, len, content }
+    }
+}
 
-struct Voc;
+#[derive(Debug)]
+struct Voc {
+    list: Vec<String>,
+    ing: Vec<String>,
+    ed: Vec<String>,
+    plural: Vec<String>,
+    simple: Vec<String>,
+    matching: Vec<String>,
+    writer: Vec<Option<Writer>>,
+}
 impl Voc {
-    fn start(store: &mut Tipo, content: &str) {
-        let list: Vec<_> = Parse::lines(content)
+    fn new(list: Vec<String>) -> Self {
+        Self {
+            list,
+            ing: vec![],
+            ed: vec![],
+            plural: vec![],
+            simple: vec![],
+            matching: vec![],
+            writer: Vec::new(),
+        }
+    }
+    fn start(store: &mut Tipo, content: &str) -> Vec<String> {
+        Parse::lines(content)
             .into_iter()
             .filter(|n| !store.contains(n))
-            .collect();
-        Voc::end(list);
+            .collect()
     }
-    fn write(name: &str, list: Vec<String>) {
+    fn write(name: &str, list: &Vec<String>) -> Option<Writer> {
         let path = if name != ON {
             format!("parts/{}", name)
         } else {
             name.to_owned()
         };
         if list.len() > 0 || name == ON {
-            fs::write(path, format!("{}\n", list.join("\n"))).unwrap();
+            let content = format!("{}\n", list.join("\n"));
+            let mi_writter = Writer::new(path, content, list.len());
+            return Some(mi_writter);
         }
+
+        None
     }
-    fn end(list: Vec<String>) {
-        let size = list.len();
-        let mut ing = vec![];
-        let mut ed = vec![];
-        let mut plural = vec![];
-        let mut simple = vec![];
-        let mut matching = vec![];
-        for word in list.clone() {
+    fn put(&mut self) -> &mut Self {
+        self.writer.push(Voc::write(ON, &self.list));
+        self.writer.push(Voc::write("match.on", &self.matching));
+        self
+    }
+    fn put_next(&mut self) -> &mut Self {
+        self.writer.append(&mut Voc::next_level(&self.ed, "N"));
+        self.writer.append(&mut Voc::next_level(&self.ing, "O"));
+        self.writer.append(&mut Voc::next_level(&self.plural, "P"));
+        self.writer.append(&mut Voc::next_level(&self.simple, "F"));
+        self
+    }
+    fn end(&mut self) -> &mut Self {
+        for word in self.list.clone() {
             if Str::is_match(&word) {
-                matching.push(word)
+                self.matching.push(word)
             } else if Str::is_ing(&word) {
-                ing.push(word)
+                self.ing.push(word)
             } else if Str::is_ed(&word) {
-                ed.push(word)
+                self.ed.push(word)
             } else if Str::is_plural(&word) {
-                plural.push(word)
+                self.plural.push(word)
             } else {
-                simple.push(word)
+                self.simple.push(word)
             }
         }
 
-        Voc::write(ON, list);
-        Voc::write("match.on", matching);
-        Voc::next_level(ed, "N");
-        Voc::next_level(ing, "O");
-        Voc::next_level(plural, "P");
-        Voc::next_level(simple, "F");
-        eprintln!("TOTAL: {}", size);
+        self
     }
-    fn process_next_level(store: &mut HashMap<usize, Vec<String>>, letter: &str) {
+    fn process_next_level(
+        store: &mut HashMap<usize, Vec<String>>,
+        letter: &str,
+    ) -> Vec<Option<Writer>> {
+        let mut inner = vec![];
         for rank in store.keys() {
             let list = store.get(rank).unwrap();
-            Voc::write(&format!("{}-{}.on", letter, rank), list.clone())
+            inner.push(Voc::write(&format!("{}-{}.on", letter, rank), list));
         }
+        inner
     }
-    fn next_level(list: Vec<String>, letter: &str) {
+    fn next_level(list: &Vec<String>, letter: &str) -> Vec<Option<Writer>> {
         let mut store = Voc::store();
 
         for word in list {
             if let Some(node) = store.get_mut(&word.len()) {
-                node.push(word);
+                node.push(word.to_owned());
             } else {
                 panic!("wrong length invalid data should't be at this point")
             }
         }
-        Voc::process_next_level(&mut store, letter);
+        Voc::process_next_level(&mut store, letter)
     }
     fn store() -> HashMap<usize, Vec<String>> {
         let mut store = HashMap::new();
@@ -228,6 +267,14 @@ impl Voc {
             start += 1;
         }
         store
+    }
+    fn files(&mut self) {
+        for writer in &self.writer {
+            if let Some(write) = writer {
+                fs::write(&write.path, &write.content).unwrap();
+            }
+        }
+        eprintln!("TOTAL: {}", self.list.len());
     }
 }
 
@@ -249,8 +296,8 @@ impl App {
         self.store = Forbid::start(&self.off_content);
         self
     }
-    fn start(&mut self) {
-        Voc::start(&mut self.store, &self.on_content);
+    fn start(&mut self) -> Vec<String> {
+        Voc::start(&mut self.store, &self.on_content)
     }
 }
 fn main() {
@@ -266,7 +313,8 @@ fn main() {
 
     let on_content = fs::read_to_string(ON).unwrap();
     let off_content = fs::read_to_string(OFF).unwrap();
-    App::new(on_content, off_content).forbid().start();
+    let list = App::new(on_content, off_content).forbid().start();
+    Voc::new(list).end().put().put_next().files();
 }
 
 #[cfg(test)]
