@@ -123,7 +123,7 @@ impl Str {
 
 struct Parse;
 impl Parse {
-    pub fn lines(input: String) -> Vec<String> {
+    pub fn lines(input: &str) -> Vec<String> {
         let mut cache: HashSet<String> = HashSet::new();
         let mut list = Vec::new();
         for lines in input.split("\n") {
@@ -145,9 +145,8 @@ impl Parse {
 
 struct Forbid;
 impl Forbid {
-    fn start() -> Tipo {
+    fn start(content: &str) -> Tipo {
         let mut store: Tipo = HashSet::new();
-        let content = fs::read_to_string(OFF).unwrap();
         for line in Parse::lines(content) {
             store.insert(line);
         }
@@ -157,9 +156,8 @@ impl Forbid {
 
 struct Voc;
 impl Voc {
-    fn start(store: &mut Tipo) {
-        let content = fs::read_to_string(ON).unwrap();
-        let list: Vec<String> = Parse::lines(content)
+    fn start(store: &mut Tipo, content: &str) {
+        let list: Vec<_> = Parse::lines(content)
             .into_iter()
             .filter(|n| !store.contains(n))
             .collect();
@@ -171,7 +169,7 @@ impl Voc {
         } else {
             name.to_owned()
         };
-        if list.len() > 0 {
+        if list.len() > 0 || name == ON {
             fs::write(path, format!("{}\n", list.join("\n"))).unwrap();
         }
     }
@@ -233,6 +231,28 @@ impl Voc {
     }
 }
 
+struct App {
+    off_content: String,
+    on_content: String,
+    store: HashSet<String>,
+}
+
+impl App {
+    fn new(on_content: String, off_content: String) -> Self {
+        Self {
+            on_content,
+            off_content,
+            store: HashSet::new(),
+        }
+    }
+    fn forbid(&mut self) -> &mut Self {
+        self.store = Forbid::start(&self.off_content);
+        self
+    }
+    fn start(&mut self) {
+        Voc::start(&mut self.store, &self.on_content);
+    }
+}
 fn main() {
     for name in vec![ON, OFF] {
         if !std::path::Path::new(name).exists() {
@@ -243,7 +263,10 @@ fn main() {
         fs::remove_dir_all("parts").unwrap();
     }
     fs::create_dir("parts").unwrap();
-    Voc::start(&mut Forbid::start());
+
+    let on_content = fs::read_to_string(ON).unwrap();
+    let off_content = fs::read_to_string(OFF).unwrap();
+    App::new(on_content, off_content).forbid().start();
 }
 
 #[cfg(test)]
