@@ -5,6 +5,7 @@ const OFF: &str = "word.off";
 const ON: &str = "word.on";
 const MATCH: &str = "";
 const MATCHEND: bool = true;
+const SORT_BY_POPULAR: bool = false;
 type Tipo = HashSet<String>;
 
 mod rule {
@@ -123,10 +124,28 @@ impl Str {
 
 struct Parse;
 impl Parse {
+    fn sort_popular(list: Vec<&str>) -> Vec<&str> {
+        if SORT_BY_POPULAR {
+            let store = list.iter().fold(HashMap::new(), |mut store, word| {
+                if let Some(word) = store.get_mut(word) {
+                    *word += 1;
+                } else {
+                    store.insert(*word, 1);
+                }
+                store
+            });
+
+            let mut new_list: Vec<_> = store.into_iter().collect();
+            new_list.sort_by(|(_, a), (_, b)| a.cmp(b));
+            new_list.reverse();
+            return new_list.iter().map(|(word, _)| *word).collect();
+        }
+        list
+    }
     pub fn lines(input: &str) -> Vec<String> {
         let mut cache: HashSet<String> = HashSet::new();
         let mut list = Vec::new();
-        for word in input.split_whitespace() {
+        for word in Parse::sort_popular(input.split_whitespace().collect()) {
             let word = word.trim().to_lowercase();
             let word = Str::rm_start_end(&word);
             if let Some(word) = Str::get_word(word) {
