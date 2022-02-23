@@ -6,6 +6,7 @@ const ON: &str = "word.on";
 const MATCH: &str = "";
 const MATCHEND: bool = true;
 const SORT_BY_POPULAR: bool = false;
+const MUST_CONTAINS_WORDS: bool = false;
 type Tipo = HashSet<String>;
 
 mod rule {
@@ -206,10 +207,29 @@ impl Voc {
         }
     }
     fn start(store: &mut Tipo, content: &str) -> Vec<String> {
-        Parse::lines(content)
-            .into_iter()
-            .filter(|n| !store.contains(n))
-            .collect()
+        let data = Parse::lines(content).into_iter();
+        if MUST_CONTAINS_WORDS {
+            let mut errors = vec![];
+            let on_file_data = data.clone().fold(HashSet::new(), |mut acc, word| {
+                acc.insert(word);
+                acc
+            });
+
+            for word in store.iter() {
+                if !on_file_data.contains(word) {
+                    errors.push(word);
+                }
+            }
+
+            for word in &errors {
+                println!("({}) does not exist! in word.on", &word);
+            }
+            if errors.len() > 0 {
+                panic!("contains duplicate words in total: {}", errors.len());
+            }
+        }
+
+        data.filter(|n| !store.contains(n)).collect()
     }
     fn write(name: &str, list: &Vec<String>) -> Option<Writer> {
         let path = if name != ON {
