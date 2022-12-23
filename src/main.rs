@@ -13,7 +13,7 @@ mod rule {
     pub struct Word {}
     impl Word {
         pub fn min() -> usize {
-            3
+            2
         }
         pub fn max() -> usize {
             25
