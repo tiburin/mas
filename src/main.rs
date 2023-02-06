@@ -7,6 +7,7 @@ const MATCH: &str = "";
 const MATCHEND: bool = true;
 const SORT_BY_POPULAR: bool = false;
 const MUST_CONTAINS_WORDS: bool = false;
+const SPANISH: bool = true;
 type Tipo = HashSet<String>;
 
 mod rule {
@@ -26,6 +27,14 @@ mod rule {
         word.len() > Word::max()
     }
 }
+
+fn get_spanish(letter: char) -> bool {
+    let mut store = HashSet::new();
+    "ñáíéóúü".chars().for_each(|n| {
+        store.insert(n);
+    });
+    store.contains(&letter)
+}
 struct English;
 impl English {
     fn start() -> i32 {
@@ -35,18 +44,34 @@ impl English {
         122
     }
 
-    fn is_range(value: i32) -> bool {
-        value >= English::start() && value <= English::end()
+    fn is_range(letter: char) -> bool {
+        let value = letter as i32;
+        let is_english = value >= English::start() && value <= English::end();
+
+        if SPANISH {
+            is_english || get_spanish(letter)
+        } else {
+            is_english
+        }
+    }
+}
+
+fn counting_utf8(input: &str, take: usize, from_end: bool) -> usize {
+    if from_end {
+        input.chars().rev().take(take).map(|n| n.len_utf8()).sum()
+    } else {
+        input.chars().take(take).map(|n| n.len_utf8()).sum()
     }
 }
 struct Str;
+
 impl Str {
     fn rm_start(input: &str) -> &str {
         let mut start = 0;
         let mut list = input.chars();
         let mut current = list.next();
         while let Some(letter) = current {
-            if !English::is_range(letter as i32) {
+            if !English::is_range(letter) {
                 start += letter.len_utf8();
             } else {
                 return &input[start..input.len()];
@@ -60,7 +85,7 @@ impl Str {
         let mut list = input.chars();
         let mut current = list.next_back();
         while let Some(letter) = current {
-            if !English::is_range(letter as i32) {
+            if !English::is_range(letter) {
                 end -= letter.len_utf8();
             } else {
                 return &input[0..end];
@@ -74,7 +99,7 @@ impl Str {
     }
     fn valid_english(input: &str) -> bool {
         for letter in input.chars() {
-            if !English::is_range(letter as i32) {
+            if !English::is_range(letter) {
                 return false;
             }
         }
@@ -84,23 +109,28 @@ impl Str {
         if input.len() <= 3 {
             return false;
         }
-        let start = input.len() - 3;
+
+        let start = input.len() - counting_utf8(input, 3, true);
         &input[start..input.len()] == "ing"
     }
     pub fn is_ed(input: &str) -> bool {
         if input.len() <= 2 {
             return false;
         }
-        let start = input.len() - 2;
+        let start = input.len() - counting_utf8(input, 2, true);
         &input[start..input.len()] == "ed"
     }
     pub fn is_plural(input: &str) -> bool {
         if input.len() <= 2 {
             return false;
         }
-        let start = input.len() - 1;
+        let start = input.len() - counting_utf8(input, 1, true);
+        let x = counting_utf8(input, 2, true);
+        let a = x - counting_utf8(input, 1, true);
+
+        let prev_start = start - a;
         let letter = &input[start..input.len()];
-        letter == "s" && &input[start - 1..start] != "s"
+        letter == "s" && &input[prev_start..start] != "s"
     }
     pub fn is_match(input: &str) -> bool {
         if input.len() < 4 || MATCH.trim() == "" {
