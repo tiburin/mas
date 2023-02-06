@@ -7,7 +7,7 @@ const MATCH: &str = "";
 const MATCHEND: bool = true;
 const SORT_BY_POPULAR: bool = false;
 const MUST_CONTAINS_WORDS: bool = false;
-const SPANISH: bool = true;
+const SPANISH: bool = false;
 type Tipo = HashSet<String>;
 
 mod rule {
@@ -25,6 +25,14 @@ mod rule {
     }
     pub fn is_max(word: &str) -> bool {
         word.len() > Word::max()
+    }
+}
+
+fn counting_utf8(input: &str, take: usize, from_end: bool) -> usize {
+    if from_end {
+        input.chars().rev().take(take).map(|n| n.len_utf8()).sum()
+    } else {
+        input.chars().take(take).map(|n| n.len_utf8()).sum()
     }
 }
 
@@ -56,13 +64,6 @@ impl English {
     }
 }
 
-fn counting_utf8(input: &str, take: usize, from_end: bool) -> usize {
-    if from_end {
-        input.chars().rev().take(take).map(|n| n.len_utf8()).sum()
-    } else {
-        input.chars().take(take).map(|n| n.len_utf8()).sum()
-    }
-}
 struct Str;
 
 impl Str {
@@ -124,10 +125,9 @@ impl Str {
         if input.len() <= 2 {
             return false;
         }
-        let start = input.len() - counting_utf8(input, 1, true);
-        let x = counting_utf8(input, 2, true);
-        let a = x - counting_utf8(input, 1, true);
-
+        let single_char_size = counting_utf8(input, 1, true);
+        let start = input.len() - single_char_size;
+        let a = counting_utf8(input, 2, true) - single_char_size;
         let prev_start = start - a;
         let letter = &input[start..input.len()];
         letter == "s" && &input[prev_start..start] != "s"
@@ -205,12 +205,11 @@ impl Forbid {
 #[derive(Debug)]
 struct Writer {
     path: String,
-    len: usize,
     content: String,
 }
 impl Writer {
-    fn new(path: String, content: String, len: usize) -> Self {
-        Self { path, len, content }
+    fn new(path: String, content: String) -> Self {
+        Self { path, content }
     }
 }
 
@@ -269,7 +268,7 @@ impl Voc {
         };
         if list.len() > 0 || name == ON {
             let content = format!("{}\n", list.join("\n"));
-            let mi_writter = Writer::new(path, content, list.len());
+            let mi_writter = Writer::new(path, content);
             return Some(mi_writter);
         }
 
