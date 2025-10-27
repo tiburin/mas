@@ -6,7 +6,7 @@ const ON: &str = "word.on";
 const MATCH: &str = "";
 const MATCHEND: bool = true;
 const SORT_BY_POPULAR: bool = false;
-const MUST_CONTAINS_WORDS: bool = false;
+const MUST_CONTAINS_WORDS: bool = true;
 const SPANISH: bool = false;
 type Tipo = HashSet<String>;
 
